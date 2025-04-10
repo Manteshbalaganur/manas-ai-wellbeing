@@ -22,21 +22,13 @@ import {
   Twitter
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-// This is a mock authentication - in a real app you'd use Firebase, Auth0, etc.
-const useAuth = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  const login = () => setIsAuthenticated(true);
-  const logout = () => setIsAuthenticated(false);
-  
-  return { isAuthenticated, login, logout };
-};
+import { useClerk, useUser, SignedIn, SignedOut } from "@clerk/clerk-react";
 
 const NavBar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const { isAuthenticated, login, logout } = useAuth();
+  const { signOut } = useClerk();
+  const { user } = useUser();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Hide navbar in chat page when scrolling down
@@ -102,13 +94,13 @@ const NavBar = () => {
           <div className="flex items-center space-x-2">
             <ModeToggle />
             
-            {isAuthenticated ? (
+            <SignedIn>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar>
-                      <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                      <AvatarFallback>UR</AvatarFallback>
+                      <AvatarImage src={user?.imageUrl} alt={user?.fullName || "User"} />
+                      <AvatarFallback>{user?.firstName?.charAt(0) || "U"}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -119,20 +111,22 @@ const NavBar = () => {
                   <DropdownMenuItem className="cursor-pointer">
                     Chat History
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout} className="cursor-pointer">
+                  <DropdownMenuItem onClick={() => signOut()} className="cursor-pointer">
                     <LogOut size={16} className="mr-2" /> Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            ) : (
+            </SignedIn>
+            
+            <SignedOut>
               <Button 
                 variant="default" 
-                onClick={login} 
+                onClick={() => window.location.href = '/sign-in'} 
                 className="bg-gradient-to-r from-arogya-primary to-arogya-secondary hover:opacity-90 transition-opacity"
               >
                 <LogIn size={18} className="mr-2" /> Sign In
               </Button>
-            )}
+            </SignedOut>
           </div>
         </div>
         
@@ -178,15 +172,16 @@ const NavBar = () => {
               Assist Doctor
             </div>
             
-            {isAuthenticated ? (
-              <Button onClick={logout} variant="outline" className="justify-start">
+            <SignedIn>
+              <Button onClick={() => signOut()} variant="outline" className="justify-start">
                 <LogOut size={16} className="mr-2" /> Sign Out
               </Button>
-            ) : (
-              <Button onClick={login} variant="default" className="bg-arogya-primary hover:bg-arogya-secondary">
+            </SignedIn>
+            <SignedOut>
+              <Button onClick={() => window.location.href = '/sign-in'} variant="default" className="bg-arogya-primary hover:bg-arogya-secondary justify-start">
                 <LogIn size={16} className="mr-2" /> Sign In
               </Button>
-            )}
+            </SignedOut>
             
             <div className="flex items-center space-x-4 px-4 pt-4 border-t border-border">
               <ModeToggle />
